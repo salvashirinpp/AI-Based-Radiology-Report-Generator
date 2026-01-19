@@ -1,0 +1,29 @@
+import os
+from groq import Groq
+from llm.prompt import RADIOLOGY_REPORT_PROMPT
+
+# Groq client
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+def truncate_text(text, max_chars=4000):
+    return text[:max_chars]
+
+
+def generate_report(facts, rag_docs):
+    rag_docs = truncate_text(str(rag_docs), max_chars=3500)
+    prompt = RADIOLOGY_REPORT_PROMPT.format(
+        facts=facts,
+        rag_docs=rag_docs
+    )
+
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {"role": "system", "content": "You generate grounded medical radiology reports."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2
+    )
+
+    return response.choices[0].message.content
+
